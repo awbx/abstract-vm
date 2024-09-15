@@ -5,7 +5,8 @@ Parser::Parser(std::vector<Token> &tokens) : _tokens(tokens) {}
 const std::vector<Instruction> &Parser::parse() {
 
   // skip any NL
-  match(TokenType::NL);
+  while (match(TokenType::NL))
+    ;
 
   while (!isExhausted()) {
     auto op = parseInstruction();
@@ -53,7 +54,7 @@ const std::string Parser::parseValue(const Token &token) {
   return std::string(1, sign) + valueToken.lexeme;
 }
 
-const IOperand *Parser::parseOperand() {
+std::shared_ptr<const IOperand> Parser::parseOperand() {
 
   auto typeToken = peek(); // use it later
 
@@ -79,11 +80,7 @@ const IOperand *Parser::parseOperand() {
   return operand;
 }
 
-Parser::~Parser() {
-  for (auto &instruction : _instructions) {
-    delete instruction.getOperand();
-  }
-}
+Parser::~Parser() {}
 
 // parse utils
 

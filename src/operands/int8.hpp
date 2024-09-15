@@ -1,5 +1,6 @@
 #pragma once
 
+#include "common.hpp"
 #include "ioperand.hpp"
 #include "operand-factory.hpp"
 
@@ -12,12 +13,12 @@ public:
 
   int getPrecision(void) const override;
   eOperandType getType(void) const override;
-  IOperand const *operator+(IOperand const &rhs) const override;
-  IOperand const *operator-(IOperand const &rhs) const override;
-  IOperand const *operator*(IOperand const &rhs) const override;
-  IOperand const *operator/(IOperand const &rhs) const override;
-  IOperand const *operator%(IOperand const &rhs) const override;
+  std::shared_ptr<const IOperand> operator+(IOperand const &rhs) const override;
+  std::shared_ptr<const IOperand> operator-(IOperand const &rhs) const override;
+  std::shared_ptr<const IOperand> operator*(IOperand const &rhs) const override;
+  std::shared_ptr<const IOperand> operator/(IOperand const &rhs) const override;
+  std::shared_ptr<const IOperand> operator%(IOperand const &rhs) const override;
   std::string const &toString(void) const override;
 
-  ~Int8Operand() override = default;
+  ~Int8Operand() override;
 };

@@ -1,14 +1,16 @@
 #pragma once
 
+#include "common.hpp"
 #include "ioperand.hpp"
 
 class OperandFactory {
 public:
-  IOperand const *createOperand(eOperandType type, std::string const &value) const;
+  std::shared_ptr<const IOperand> createOperand(eOperandType type,
+                                                std::string const &value) const;
 
-  IOperand const *createInt8(std::string const &value) const;
-  IOperand const *createInt16(std::string const &value) const;
-  IOperand const *createInt32(std::string const &value) const;
-  IOperand const *createFloat(std::string const &value) const;
-  IOperand const *createDouble(std::string const &value) const;
+  std::shared_ptr<const IOperand> createInt8(std::string const &value) const;
+  std::shared_ptr<const IOperand> createInt16(std::string const &value) const;
+  std::shared_ptr<const IOperand> createInt32(std::string const &value) const;
+  std::shared_ptr<const IOperand> createFloat(std::string const &value) const;
+  std::shared_ptr<const IOperand> createDouble(std::string const &value) const;
 };

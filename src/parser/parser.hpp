@@ -20,7 +20,7 @@ public:
 
 private:
   Instruction parseInstruction();
-  const IOperand *parseOperand();
+  std::shared_ptr<const IOperand> parseOperand();
   const std::string parseValue(const Token &token);
 
 private:
