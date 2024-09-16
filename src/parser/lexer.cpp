@@ -7,17 +7,16 @@ std::vector<Token> Lexer::tokenize() {
   char c;
 
   std::map<std::string, TokenType> keywords = {
-      {"push", TokenType::OP},        {"pop", TokenType::OP},
-      {"dump", TokenType::OP},        {"assert", TokenType::OP},
-      {"add", TokenType::OP},         {"sub", TokenType::OP},
-      {"mul", TokenType::OP},         {"div", TokenType::OP},
-      {"mod", TokenType::OP},         {"print", TokenType::OP},
-      {"int8", TokenType::INT8},      {"int16", TokenType::INT16},
-      {"int32", TokenType::INT32},    {"float", TokenType::FLOAT32},
-      {"double", TokenType::FLOAT64}, {"exit", TokenType::EXIT},
-      {"(", TokenType::LP},           {")", TokenType::RP},
+      {"push", TokenType::OP},        {"assert", TokenType::OP},
+      {"dump", TokenType::OPNOP},     {"add", TokenType::OPNOP},
+      {"mul", TokenType::OPNOP},      {"mod", TokenType::OPNOP},
+      {"pop", TokenType::OPNOP},      {"sub", TokenType::OPNOP},
+      {"div", TokenType::OPNOP},      {"print", TokenType::OPNOP},
+      {"exit", TokenType::OPNOP},     {"int16", TokenType::INT16},
+      {"float", TokenType::FLOAT32},  {")", TokenType::RP},
+      {"int8", TokenType::INT8},      {"int32", TokenType::INT32},
+      {"double", TokenType::FLOAT64}, {"(", TokenType::LP},
       {"-", TokenType::NEG},
-
   };
 
   size_t line = 1;
@@ -39,6 +38,7 @@ std::vector<Token> Lexer::tokenize() {
       while (stream.get(c) && c != '\n') {
         column++;
       }
+      line++;
       break;
     }
     case '\n':

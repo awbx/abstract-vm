@@ -19,7 +19,8 @@ enum TokenType {
   RP = 1 << 10,
   NL = 1 << 11,
   NEG = 1 << 12,
-  EXIT = 1 << 13,
+  // EXIT = 1 << 13,
+  OPNOP = 1 << 13,
   _EOF = 1 << 14,
 };
 
