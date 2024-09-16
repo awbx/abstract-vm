@@ -8,6 +8,7 @@ public:
   std::shared_ptr<const IOperand> createOperand(eOperandType type,
                                                 std::string const &value) const;
 
+private:
   std::shared_ptr<const IOperand> createInt8(std::string const &value) const;
   std::shared_ptr<const IOperand> createInt16(std::string const &value) const;
   std::shared_ptr<const IOperand> createInt32(std::string const &value) const;
