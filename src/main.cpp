@@ -7,21 +7,26 @@ int main() {
   Lexer lexer(std::cin);
   auto tokens = lexer.tokenize();
 
-  for (const auto &token : tokens) {
-    std::cout << "Token: " << token.lexeme << " | type: " << token.type << std::endl;
+  // for (const auto &token : tokens) {
+  //   std::cerr << "Token: " << token.lexeme << " Type: " << token.type
+  //             << " Line: " << token.line << " Column: " << token.column << std::endl;
+  // }
+
+  try {
+    Parser parser(tokens);
+
+    auto instructions = parser.parse();
+
+    // for (auto &instruction : instructions) {
+    //   std::cout << instruction << std::endl;
+    // }
+
+    auto vm = AbstractVM();
+    vm.execute(instructions);
+
+  } catch (std::exception &e) {
+    std::cerr << e.what() << std::endl;
   }
-
-  Parser parser(tokens);
-
-  auto instructions = parser.parse();
-
-  for (auto &instruction : instructions) {
-    std::cout << instruction << std::endl;
-  }
-
-  auto vm = AbstractVM();
-
-  vm.execute(instructions);
 
   return 0;
 }
