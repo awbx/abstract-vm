@@ -4,6 +4,11 @@ AbstractVM::AbstractVM() {}
 
 AbstractVM::~AbstractVM() {}
 
+void AbstractVM::exit(std::shared_ptr<const IOperand> operand) {
+  (void)operand;
+  std::exit(0);
+}
+
 void AbstractVM::push(std::shared_ptr<const IOperand> operand) { _stack.push(operand); }
 
 void AbstractVM::print(std::shared_ptr<const IOperand> operand) {
@@ -44,6 +49,7 @@ void AbstractVM::execute(const std::vector<Instruction> &instructions) {
         {"push", &AbstractVM::push},
         {"print", &AbstractVM::print},
         {"add", &AbstractVM::add},
+        {"exit", &AbstractVM::exit},
         // {"pop", &AbstractVM::pop},
         // {"dump", &AbstractVM::dump},
         // {"assert", &AbstractVM::assert},
@@ -51,7 +57,6 @@ void AbstractVM::execute(const std::vector<Instruction> &instructions) {
         // {"mul", &AbstractVM::mul},
         // {"div", &AbstractVM::div},
         // {"mod", &AbstractVM::mod},
-        // {"exit", &AbstractVM::exit},
     };
 
     if (ops.find(op) == ops.end()) {
