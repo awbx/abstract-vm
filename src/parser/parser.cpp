@@ -8,16 +8,26 @@ const std::vector<Instruction> &Parser::parse() {
   while (match(TokenType::NL))
     ;
 
+  auto exit = false;
+
   while (!isExhausted()) {
     auto op = parseInstruction();
+
+    if (op.getOp() == "exit")
+      exit = true;
+
     _instructions.push_back(op);
 
     if (!(peek().type & (TokenType::NL | TokenType::_EOF)))
-      throw std::runtime_error("Expected new line or EOF");
+      throw ParserException(_tokens[_pos], "Expected New Line or EOF");
 
     if (peek().type & TokenType::NL)
       advance();
   }
+
+  if (!exit)
+    throw ParserException(_tokens[_pos], "Expected exit instruction");
+
   return _instructions;
 }
 
@@ -26,10 +36,16 @@ Instruction Parser::parseInstruction() {
   auto opToken = peek();
   auto instruction = Instruction(opToken.lexeme);
 
-  consume(TokenType::OP | TokenType::EXIT, "Expected operation");
+  consume(TokenType::OP | TokenType::OPNOP, "Expected operation");
 
   auto token = peek();
-  if ((token.type & (TokenType::NL | TokenType::_EOF))) {
+  if (opToken.type & TokenType::OPNOP &&
+      !(token.type & (TokenType::NL | TokenType::_EOF))) {
+    throw ParserException(_tokens[_pos], "instruction does not require operand");
+  }
+
+  if (opToken.type & TokenType::OPNOP &&
+      (token.type & (TokenType::NL | TokenType::_EOF))) {
     return instruction;
   }
 
@@ -45,10 +61,10 @@ const std::string Parser::parseValue(const Token &token) {
   auto valueToken = peek();
 
   if (token.type & INT_TYPES && !match(TokenType::INT_VALUE)) {
-    throw std::runtime_error("Expected integer value");
+    throw ParserException(_tokens[_pos], "Expected integer value");
   }
   if (token.type & FLOAT_TYPES && !match(TokenType::FLOAT_VALUE)) {
-    throw std::runtime_error("Expected float value");
+    throw ParserException(_tokens[_pos], "Expected float value");
   }
 
   return std::string(1, sign) + valueToken.lexeme;
@@ -99,7 +115,7 @@ bool Parser::match(int type) {
 
 void Parser::consume(int type, const std::string &message) {
   if (!match(type)) {
-    throw std::runtime_error(message); // TODO: change it with parser error
+    throw ParserException(_tokens[_pos], message);
   }
 }
 

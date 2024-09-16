@@ -4,6 +4,7 @@
 #include "ioperand.hpp"
 #include "lexer.hpp"
 #include "operand-factory.hpp"
+#include "parser-exception.hpp"
 
 class Parser {
 
