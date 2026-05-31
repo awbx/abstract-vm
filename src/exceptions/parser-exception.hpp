@@ -3,10 +3,7 @@
 #include "common.hpp"
 #include "lexer.hpp"
 
-class ParserException : public std::exception {
-private:
-  std::string _message;
-
+class ParserException : public std::logic_error {
 public:
   ParserException();
   ParserException(const std::string &raw);
@@ -15,6 +12,4 @@ public:
   ParserException(const ParserException &other);
   ParserException &operator=(const ParserException &other);
   ~ParserException() override;
-
-  const char *what() const noexcept override;
 };

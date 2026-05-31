@@ -1,17 +1,17 @@
 #include "runtime-exception.hpp"
 
-RuntimeException::RuntimeException() : _message("Runtime error") {}
+RuntimeException::RuntimeException() : std::runtime_error("Runtime error") {}
 
-RuntimeException::RuntimeException(const std::string &message) : _message(message) {}
+RuntimeException::RuntimeException(const std::string &message)
+    : std::runtime_error(message) {}
 
-RuntimeException::RuntimeException(const RuntimeException &other) : _message(other._message) {}
+RuntimeException::RuntimeException(const RuntimeException &other)
+    : std::runtime_error(other) {}
 
 RuntimeException &RuntimeException::operator=(const RuntimeException &other) {
   if (this != &other)
-    _message = other._message;
+    std::runtime_error::operator=(other);
   return *this;
 }
 
 RuntimeException::~RuntimeException() {}
-
-const char *RuntimeException::what() const noexcept { return _message.c_str(); }
