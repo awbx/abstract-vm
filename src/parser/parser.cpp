@@ -1,89 +1,88 @@
 #include "parser.hpp"
+#include "runtime-exception.hpp"
 
-Parser::Parser(std::vector<Token> &tokens) : _tokens(tokens) {}
+Parser::Parser(std::vector<Token> &tokens) : _tokens(tokens), _pos(0) {}
+
+Parser::~Parser() {}
 
 const std::vector<Instruction> &Parser::parse() {
-
-  // skip any NL
   while (match(TokenType::NL))
     ;
 
-  auto exit = false;
-
   while (!isExhausted()) {
-    auto op = parseInstruction();
+    try {
+      Instruction instr = parseInstruction();
+      _instructions.push_back(instr);
 
-    if (op.getOp() == "exit")
-      exit = true;
-
-    _instructions.push_back(op);
-
-    if (!(peek().type & (TokenType::NL | TokenType::_EOF)))
-      throw ParserException(_tokens[_pos], "Expected New Line or EOF");
-
-    if (peek().type & TokenType::NL)
-      advance();
+      if (!(peek().type & (TokenType::NL | TokenType::_EOF))) {
+        throw ParserException(peek(), "Expected newline or end of file");
+      }
+      while (match(TokenType::NL))
+        ;
+    } catch (const ParserException &e) {
+      _errors.push_back(e.what());
+      skipToNextStatement();
+    } catch (const std::exception &e) {
+      _errors.push_back(std::string("Line ") + std::to_string(peek().line) +
+                        " : " + e.what());
+      skipToNextStatement();
+    }
   }
 
-  if (!exit)
-    throw ParserException(_tokens[_pos], "Expected exit instruction");
+  if (!_errors.empty()) {
+    std::string joined;
+    for (size_t i = 0; i < _errors.size(); ++i) {
+      joined += _errors[i];
+      if (i + 1 < _errors.size())
+        joined += "\n";
+    }
+    throw ParserException(joined);
+  }
 
   return _instructions;
 }
 
+void Parser::skipToNextStatement() {
+  while (!isExhausted() && peek().type != TokenType::NL)
+    advance();
+  while (match(TokenType::NL))
+    ;
+}
+
 Instruction Parser::parseInstruction() {
+  Token opToken = peek();
 
-  auto opToken = peek();
-  auto instruction = Instruction(opToken.lexeme);
-
-  consume(TokenType::OP | TokenType::OPNOP, "Expected operation");
-
-  auto token = peek();
-  if (opToken.type & TokenType::OPNOP &&
-      !(token.type & (TokenType::NL | TokenType::_EOF))) {
-    throw ParserException(_tokens[_pos], "instruction does not require operand");
+  if (opToken.type == TokenType::ILLEGAL_CHAR) {
+    advance();
+    throw ParserException(opToken, "Unknown token '" + opToken.lexeme + "'");
   }
 
-  if (opToken.type & TokenType::OPNOP &&
-      (token.type & (TokenType::NL | TokenType::_EOF))) {
+  Instruction instruction(opToken.lexeme, opToken.line);
+  consume(TokenType::OP | TokenType::OPNOP, "Expected instruction");
+
+  bool isNop = (opToken.type & TokenType::OPNOP) != 0;
+  bool atTerminator = (peek().type & (TokenType::NL | TokenType::_EOF)) != 0;
+
+  if (isNop && !atTerminator)
+    throw ParserException(peek(), "Instruction '" + opToken.lexeme +
+                                       "' takes no operand");
+  if (isNop)
     return instruction;
-  }
 
-  auto operand = parseOperand();
-  instruction.setOperand(operand);
+  instruction.setOperand(parseOperand());
   return instruction;
 }
 
-const std::string Parser::parseValue(const Token &token) {
-
-  auto sign = match(TokenType::NEG) ? '-' : '+';
-
-  auto valueToken = peek();
-
-  if (token.type & INT_TYPES && !match(TokenType::INT_VALUE)) {
-    throw ParserException(_tokens[_pos], "Expected integer value");
-  }
-  if (token.type & FLOAT_TYPES && !match(TokenType::FLOAT_VALUE)) {
-    throw ParserException(_tokens[_pos], "Expected float value");
-  }
-
-  return std::string(1, sign) + valueToken.lexeme;
-}
-
 std::shared_ptr<const IOperand> Parser::parseOperand() {
+  Token typeToken = peek();
+  int typeMask = TokenType::INT8 | TokenType::INT16 | TokenType::INT32 |
+                 TokenType::FLOAT32 | TokenType::FLOAT64;
+  consume(typeMask, "Expected operand type (int8, int16, int32, float, double)");
+  consume(TokenType::LP, "Expected '(' after type");
+  std::string value = parseValue(typeToken);
+  consume(TokenType::RP, "Expected ')' after value");
 
-  auto typeToken = peek(); // use it later
-
-  consume(TokenType::INT8 | TokenType::INT16 | TokenType::INT32 | TokenType::FLOAT32 |
-              TokenType::FLOAT64,
-          "Expected type");
-  consume(TokenType::LP, "Expected '('");
-  auto value = parseValue(typeToken);
-  consume(TokenType::RP, "Expected ')'");
-
-  auto operandFactory = OperandFactory();
-
-  std::map<TokenType, eOperandType> typeMap = {
+  static const std::map<TokenType, eOperandType> typeMap = {
       {TokenType::INT8, eOperandType::Int8},
       {TokenType::INT16, eOperandType::Int16},
       {TokenType::INT32, eOperandType::Int32},
@@ -91,34 +90,41 @@ std::shared_ptr<const IOperand> Parser::parseOperand() {
       {TokenType::FLOAT64, eOperandType::Double},
   };
 
-  auto operand = operandFactory.createOperand(typeMap[typeToken.type], value);
-
-  return operand;
+  OperandFactory factory;
+  return factory.createOperand(typeMap.at(typeToken.type), value);
 }
 
-Parser::~Parser() {}
+std::string Parser::parseValue(const Token &typeToken) {
+  std::string sign = match(TokenType::NEG) ? "-" : "";
+  Token valueToken = peek();
 
-// parse utils
+  if (typeToken.type & INT_TYPES) {
+    if (!match(TokenType::INT_VALUE))
+      throw ParserException(valueToken, "Expected integer value");
+  } else if (typeToken.type & FLOAT_TYPES) {
+    if (!match(TokenType::FLOAT_VALUE))
+      throw ParserException(valueToken, "Expected decimal value");
+  }
+  return sign + valueToken.lexeme;
+}
 
-bool Parser::isExhausted() {
-  return _pos >= _tokens.size() || _tokens[_pos].type & TokenType::_EOF;
+bool Parser::isExhausted() const {
+  return _pos >= _tokens.size() || _tokens[_pos].type == TokenType::_EOF;
 }
 
 bool Parser::match(int type) {
-  if (_tokens[_pos].type & type) {
+  if (_pos < _tokens.size() && (_tokens[_pos].type & type)) {
     advance();
     return true;
   }
-
   return false;
 }
 
 void Parser::consume(int type, const std::string &message) {
-  if (!match(type)) {
-    throw ParserException(_tokens[_pos], message);
-  }
+  if (!match(type))
+    throw ParserException(peek(), message);
 }
 
 void Parser::advance() { _pos++; }
 
-const Token &Parser::peek() { return _tokens[_pos]; }
+const Token &Parser::peek() const { return _tokens[_pos]; }

@@ -3,7 +3,7 @@
 
 #include "common.hpp"
 
-enum eOperandType { Int8, Int16, Int32, Float, Double };
+enum class eOperandType { Int8, Int16, Int32, Float, Double };
 
 class IOperand {
 public:

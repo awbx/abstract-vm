@@ -1,9 +1,6 @@
 #pragma once
 
-#include <iostream>
-#include <map>
-#include <string>
-#include <vector>
+#include "common.hpp"
 
 enum TokenType {
   OP = 1 << 0,
@@ -19,7 +16,6 @@ enum TokenType {
   RP = 1 << 10,
   NL = 1 << 11,
   NEG = 1 << 12,
-  // EXIT = 1 << 13,
   OPNOP = 1 << 13,
   _EOF = 1 << 14,
 };
@@ -35,13 +31,17 @@ struct Token {
 };
 
 class Lexer {
-  std::istream &stream;
+private:
+  std::istream &_stream;
 
 public:
   Lexer(std::istream &stream);
+  Lexer(const Lexer &) = delete;
+  Lexer &operator=(const Lexer &) = delete;
+  ~Lexer();
 
   std::vector<Token> tokenize();
 
 private:
-  char lookahead();
+  int peekChar();
 };

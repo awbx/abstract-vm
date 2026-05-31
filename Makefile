@@ -1,26 +1,20 @@
-CXXFLAGS = -std=c++17 -Wextra -Wall -g -O3 #-Werror 
+CXX := c++
+CXXFLAGS := -std=c++17 -Wall -Wextra -Werror -O2
 
-SRCS := $(shell find . -name '*.cpp' -type f)
-
+SRCS := $(shell find src -name '*.cpp' -type f)
 OBJS := $(SRCS:.cpp=.o)
+HEADERS := $(shell find src include -name '*.hpp' -type f)
 
+INCLUDE_DIRS := $(sort $(dir $(HEADERS)))
+INCLUDE_FLAGS := $(addprefix -I,$(INCLUDE_DIRS))
 
-HEADERS= $(shell find . -name "*.hpp")
-
-
-INCLUDE := $(shell find . -name "*.hpp" | sed 's/[^/]*$$//g' | sort | uniq)
-INCLUDE_FLAGS := $(addprefix -I,$(INCLUDE))
-
-TARGET = bin/abstract-vm
+TARGET := bin/avm
 
 all: $(TARGET)
 
-run: $(TARGET)
-	./$(TARGET)
-
 $(TARGET): $(OBJS)
 	@mkdir -p bin
-	$(CXX) $(CXXFLAGS) $^ -o $@ -fsanitize=address
+	$(CXX) $(CXXFLAGS) $^ -o $@
 
 %.o: %.cpp $(HEADERS)
 	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) -c $< -o $@
@@ -29,9 +23,8 @@ clean:
 	rm -f $(OBJS)
 
 fclean: clean
-	rm -f $(TARGET)
+	rm -rf bin
 
-re: fclean all 
-
+re: fclean all
 
 .PHONY: all clean fclean re
